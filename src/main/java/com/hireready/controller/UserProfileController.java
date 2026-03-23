@@ -40,6 +40,7 @@ public class UserProfileController {
         profile.setAvgDbmsScore(Math.round(avgDbms * 100.0) / 100.0);
         profile.setAvgCnScore(Math.round(avgCn * 100.0) / 100.0);
         profile.setSolvedDsaCount(solvedDsa);
+        profile.setRecentAttempts(assessmentRepository.findTop5ByUserIdOrderByTimestampDesc(userId));
 
         return ResponseEntity.ok(profile);
     }

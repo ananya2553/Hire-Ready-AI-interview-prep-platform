@@ -1,24 +1,48 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { BrowserRouter as Router, Routes, Route, Link, Navigate } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
 import ProtectedRoute from './components/ProtectedRoute';
 import Home from './pages/Home';
 import Quiz from './pages/Quiz';
 import Result from './pages/Result';
 import Login from './pages/Login';
 import Signup from './pages/Signup';
+import Profile from './pages/Profile';
+import ErrorBoundary from './components/ErrorBoundary';
 
 function Sidebar() {
   const token = localStorage.getItem('token');
   const name = localStorage.getItem('name');
   
+  const [isExiting, setIsExiting] = useState(false);
+  
   const handleLogout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('name');
-    window.location.href = '/login';
+    setIsExiting(true);
+    setTimeout(() => {
+      localStorage.removeItem('token');
+      localStorage.removeItem('name');
+      window.location.href = '/login';
+    }, 600);
   };
 
   return (
-    <aside className="w-72 glass-sidebar h-screen sticky top-0 flex flex-col justify-between p-8 z-50 transition-all">
+    <>
+      <AnimatePresence>
+        {isExiting && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.5 }}
+            className="fixed inset-0 z-[9999] bg-slate-50 backdrop-blur-md flex items-center justify-center flex-col"
+          >
+             <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-indigo-500 to-indigo-600 shadow-xl shadow-indigo-200 text-white flex items-center justify-center text-3xl font-black mb-6 animate-pulse">H</div>
+             <p className="text-xl font-bold text-slate-800 tracking-wider">Signing out securely...</p>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <aside className="w-72 glass-sidebar h-screen sticky top-0 flex flex-col justify-between p-8 z-50 transition-all">
       <div>
         <Link to="/" className="text-2xl font-black tracking-tighter text-indigo-950 hover:text-indigo-600 transition flex items-center gap-3 mb-14 drop-shadow-sm">
           <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-indigo-600 shadow-lg shadow-indigo-200 text-white flex items-center justify-center text-xl">H</div>
@@ -27,6 +51,9 @@ function Sidebar() {
         <nav className="flex flex-col gap-3">
           <Link to="/" className="px-5 py-3.5 text-sm font-bold tracking-wide rounded-xl transition-all text-indigo-700 bg-indigo-50/80 hover:bg-indigo-100 hover:scale-[1.02] border border-indigo-100/50 shadow-sm">
             Dashboard
+          </Link>
+          <Link to="/profile" className="px-5 py-3.5 text-sm font-bold tracking-wide rounded-xl transition-all text-slate-600 hover:text-indigo-700 hover:bg-indigo-50/50 hover:scale-[1.02] border border-transparent hover:border-indigo-100/50">
+            User Profile
           </Link>
         </nav>
       </div>
@@ -51,7 +78,8 @@ function Sidebar() {
           </div>
         )}
       </div>
-    </aside>
+      </aside>
+    </>
   );
 }
 
@@ -62,19 +90,22 @@ function App() {
         <Sidebar />
         <main className="flex-1 overflow-y-auto w-full relative z-10 scroll-smooth">
           <div className="w-full h-full relative">
-            <Routes>
-              <Route path="/login" element={<Login />} />
-              <Route path="/signup" element={<Signup />} />
-              
-              {/* Protected Routes */}
-              <Route element={<ProtectedRoute />}>
-                <Route path="/" element={<Home />} />
-                <Route path="/dashboard" element={<Navigate to="/" replace />} />
-                <Route path="/quiz" element={<Navigate to="/" replace />} />
-                <Route path="/quiz/:subject" element={<Quiz />} />
-                <Route path="/result" element={<Result />} />
-              </Route>
-            </Routes>
+            <ErrorBoundary>
+              <Routes>
+                <Route path="/login" element={<Login />} />
+                <Route path="/signup" element={<Signup />} />
+                
+                {/* Protected Routes */}
+                <Route element={<ProtectedRoute />}>
+                  <Route path="/" element={<Home />} />
+                  <Route path="/dashboard" element={<Navigate to="/" replace />} />
+                  <Route path="/quiz" element={<Navigate to="/" replace />} />
+                  <Route path="/quiz/:subject" element={<Quiz />} />
+                  <Route path="/result" element={<Result />} />
+                  <Route path="/profile" element={<Profile />} />
+                </Route>
+              </Routes>
+            </ErrorBoundary>
           </div>
         </main>
       </div>

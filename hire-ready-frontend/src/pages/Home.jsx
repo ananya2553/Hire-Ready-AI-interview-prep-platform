@@ -1,7 +1,9 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Monitor, Database, Network, Code } from 'lucide-react';
+import { Monitor, Database, Network, Code, Clock } from 'lucide-react';
 import { motion } from 'framer-motion';
+import api from '../api/axios';
+import SkeletonLoader from '../components/SkeletonLoader';
 
 export default function Home() {
   const navigate = useNavigate();
@@ -12,6 +14,24 @@ export default function Home() {
     { id: 'CN', name: 'Computer Networks', icon: Network },
     { id: 'DSA', name: 'Data Structures & Algorithms', icon: Code },
   ];
+
+  const [recentAttempts, setRecentAttempts] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchRecent = async () => {
+      try {
+        const userId = localStorage.getItem('userId') || 1;
+        const response = await api.get(`/profile/${userId}`);
+        setRecentAttempts(response.data.recentAttempts || []);
+      } catch (error) {
+        console.error("Failed to load dashboard data", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchRecent();
+  }, []);
 
   return (
     <div className="flex flex-col flex-1 items-center justify-start w-full py-20 px-8 gap-20">
@@ -59,6 +79,46 @@ export default function Home() {
               </div>
             </motion.div>
           ))}
+        </div>
+      </div>
+
+      {/* Recent Activity Section */}
+      <div className="w-full max-w-6xl mt-4">
+        <div className="glass-card p-8">
+          <h2 className="text-2xl font-black text-slate-800 mb-6 tracking-tight flex items-center gap-2">
+            <Clock className="text-indigo-500" /> Recent Activity
+          </h2>
+          
+          {loading ? (
+            <SkeletonLoader type="table" />
+          ) : recentAttempts.length > 0 ? (
+            <div className="overflow-x-auto rounded-xl border border-slate-100 shadow-sm">
+              <table className="w-full text-left bg-white">
+                <thead>
+                  <tr className="bg-slate-50 text-slate-500 text-xs uppercase tracking-widest">
+                    <th className="px-6 py-4 font-bold">Subject</th>
+                    <th className="px-6 py-4 font-bold">Score</th>
+                    <th className="px-6 py-4 font-bold">Date</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-50">
+                  {recentAttempts.map((attempt) => (
+                    <tr key={attempt.id} className="hover:bg-slate-50/50 transition-colors">
+                      <td className="px-6 py-4 font-bold text-slate-700">{attempt.subject}</td>
+                      <td className="px-6 py-4 font-bold text-emerald-600">{attempt.totalScore}%</td>
+                      <td className="px-6 py-4 text-sm text-slate-500 font-medium">
+                        {new Date(attempt.timestamp).toLocaleDateString()}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <div className="p-8 text-center bg-slate-50 rounded-xl border border-slate-100 text-slate-500 font-medium">
+              No recent activity found. Click on a subject above to start a session!
+            </div>
+          )}
         </div>
       </div>
       

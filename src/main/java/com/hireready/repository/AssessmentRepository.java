@@ -9,4 +9,5 @@ import java.util.List;
 @Repository
 public interface AssessmentRepository extends JpaRepository<Assessment, Long> {
     List<Assessment> findByUserId(Long userId);
+    List<Assessment> findTop5ByUserIdOrderByTimestampDesc(Long userId);
 }

@@ -10,4 +10,5 @@ public class UserProfileDTO {
     private double avgDbmsScore;
     private double avgCnScore;
     private int solvedDsaCount;
+    private java.util.List<com.hireready.entity.Assessment> recentAttempts;
 }

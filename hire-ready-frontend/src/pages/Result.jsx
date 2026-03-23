@@ -1,27 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js';
-import { Pie } from 'react-chartjs-2';
-import { CheckCircle, XCircle, ArrowLeft, Sparkles } from 'lucide-react';
-
-ChartJS.register(ArcElement, Tooltip, Legend);
-
-const Typewriter = ({ text, delay = 25 }) => {
-  const [currentText, setCurrentText] = useState('');
-  const [currentIndex, setCurrentIndex] = useState(0);
-
-  useEffect(() => {
-    if (currentIndex < text.length) {
-      const timeout = setTimeout(() => {
-        setCurrentText(prev => prev + text[currentIndex]);
-        setCurrentIndex(prev => prev + 1);
-      }, delay);
-      return () => clearTimeout(timeout);
-    }
-  }, [currentIndex, delay, text]);
-
-  return <span>{currentText}</span>;
-};
+import { CheckCircle, XCircle, ArrowLeft } from 'lucide-react';
+import confetti from 'canvas-confetti';
+import ResultAnalysis from '../components/ResultAnalysis';
 
 export default function Result() {
   const location = useLocation();
@@ -40,6 +21,35 @@ export default function Result() {
   const correctCount = results.filter(r => String(r.selected).trim().toLowerCase() === String(r.correct).trim().toLowerCase()).length;
   const incorrectCount = results.length - correctCount;
   const percentage = Math.round((correctCount/results.length)*100);
+
+  useEffect(() => {
+    if (percentage > 80) {
+      const duration = 3 * 1000;
+      const end = Date.now() + duration;
+
+      const frame = () => {
+        confetti({
+          particleCount: 5,
+          angle: 60,
+          spread: 55,
+          origin: { x: 0 },
+          colors: ['#6366f1', '#8b5cf6', '#10b981'] // Indigo, Violet, Emerald
+        });
+        confetti({
+          particleCount: 5,
+          angle: 120,
+          spread: 55,
+          origin: { x: 1 },
+          colors: ['#6366f1', '#8b5cf6', '#10b981']
+        });
+
+        if (Date.now() < end) {
+          requestAnimationFrame(frame);
+        }
+      };
+      frame();
+    }
+  }, [percentage]);
 
   // Mocking the AI Service response payload interpretation for the UI.
   // In a full integration, this would come securely via QuizResultDTO from the /api/quiz/submit endpoint logic.
@@ -79,33 +89,7 @@ export default function Result() {
       <div className="glass-card w-full md:w-[35%] p-8 flex flex-col items-center relative overflow-hidden shadow-lg shadow-slate-200/50">
         <div className="absolute top-0 left-0 w-full h-[5px] bg-emerald-500"></div>
         <h2 className="text-2xl font-black mb-8 text-slate-800 tracking-wide uppercase">{subject} Analytics</h2>
-        <div className="w-full h-64 mb-10 relative">
-          <Pie data={data} options={options} />
-        </div>
-        <div className="w-full flex justify-between items-center px-6 py-5 bg-white rounded-2xl border border-slate-100 shadow-sm">
-          <span className="text-slate-500 font-bold tracking-wider text-sm">FINAL SCORE</span>
-          <span className="text-4xl font-black text-emerald-600 drop-shadow-sm">
-            {percentage}%
-          </span>
-        </div>
-
-        {/* AI Interviewer Analysis Box */}
-        <div className="w-full flex flex-col mt-8 p-6 rounded-2xl bg-emerald-50/70 border border-emerald-100 shadow-sm transition-all duration-500 relative overflow-hidden">
-          <div className="absolute inset-0 bg-gradient-to-br from-white/40 to-emerald-100/20 pointer-events-none"></div>
-          <h3 className="text-emerald-700 font-bold text-xs tracking-widest uppercase mb-4 flex items-center gap-2 relative z-10">
-            <Sparkles size={16} className="text-emerald-500" /> AI Interviewer Analysis
-          </h3>
-          <div className="text-slate-700 text-sm leading-relaxed flex flex-col gap-5 font-medium relative z-10">
-            <div>
-               <strong className="text-emerald-800 block mb-1">Strengths:</strong>
-               <div className="min-h-[40px] text-emerald-950/80 italic font-serif leading-relaxed"><Typewriter text={aiFeedback.strengths} delay={30} /></div>
-            </div>
-            <div>
-               <strong className="text-indigo-800 block mb-1">Areas for Improvement:</strong>
-               <div className="min-h-[40px] text-indigo-950/80 italic font-serif leading-relaxed"><Typewriter text={aiFeedback.improvements} delay={35} /></div>
-            </div>
-          </div>
-        </div>
+        <ResultAnalysis score={percentage} subject={subject} aiFeedback={aiFeedback} />
 
         <button onClick={() => navigate('/')} className="mt-8 flex items-center justify-center gap-3 w-full py-4 bg-indigo-50 border border-indigo-100 hover:bg-indigo-600 rounded-xl font-bold text-indigo-700 hover:text-white transition-all shadow-sm hover:shadow-md hover:-translate-y-[2px]">
           <ArrowLeft size={20} /> Dashboard Returns
